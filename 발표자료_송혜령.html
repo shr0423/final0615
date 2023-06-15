@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #wrapper {
+            width: 400px;
+            height: 850px;
+            background: palegreen;
+
+        }
+
+        #header {
+            width: 100%;
+            height: 80px;
+            background: skyblue;
+        }
+
+        #hp {
+            font-size: 50px;
+            color: red;
+            float: left;
+        }
+
+        #score {
+            font-size: 40px;
+            float: left;
+            margin-left: 180px;
+            margin-top: 10px;
+        }
+
+        #time {
+            font-size: 40px;
+            float: left;
+            margin-left: 25px;
+            margin-top: 10px;
+        }
+
+        #content {
+            width: 100%;
+            height: 100px;
+            background: palegreen;
+            font-size: 30px;
+            text-align: center;
+            border: 5px solid green;
+            box-sizing: border-box;
+            padding-top:20px;
+        }
+
+        #hint {
+            width: 60%;
+            height: 60px;
+            font-size: 30px;
+            background: pink;
+            border-radius: 10%;
+        }
+
+        #hintbox {
+            text-align: center;
+            margin-top: 10px;   
+        }
+
+        img {
+            width: 190px;
+            height: 190px;
+            display: inline-block;
+            cursor: pointer;
+        }
+
+        img:hover {
+            border: 7px solid green;
+        }
+
+        button {
+            cursor: pointer;
+            width: 130px;
+            height: 60px;
+            background: plum;
+            border-radius: 10%;
+            font-size: 16px;
+            margin-bottom: 10px;
+
+        }
+
+        button:hover {
+            border: 7px solid purple;
+        }
+
+        @keyframes blink-effect {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .blink {
+            animation: blink-effect 1s step-end infinite;
+
+        }
+    </style>
+    <script src="./js/lib.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script>
+        let content;
+        let wrapper;
+        let hp;
+        let header;
+        let score = 0;
+        let img;
+        let hintbox;
+        let hint;
+        let pic;
+        let timer;
+        let st;
+
+        let hpArray = [];
+        let size = 40;
+        let box;
+        let game_score = 0;
+        let h = 3;
+        let json;
+        let currentArray = [];
+
+
+        //사용자가 어떤 분야를 선택햇는지를 알수있는 index
+        let categoryIndex = 0;
+        let imgIndex = 0;
+        let r = 0; //일차원 배열내의 어떤 요소를 사용자가 보고 있는지를 결정하는 index
+        let sec = 10;
+
+        //과일을 대상으로 한 데이터
+        let dataArray = [
+            [
+                { id: "pic0", value: "./images/apple.png", name: "りんご(링고)", hint: "あかい(아카이/빨갛다)", answer: "りんご(링고)" },
+                { id: "pic1", value: "./images/watermelon.png", name: "すいか(스이카)", hint: "たね(타네/씨앗)", answer: "すいか(스이카)" },
+                { id: "pic2", value: "./images/cherry.png", name: "さくらんぼ(사쿠란보)", hint: "うた(우타/노래)", answer: "さくらんぼ(사쿠란보)" },
+                { id: "pic3", value: "./images/grape.png", name: "ぶどう(부도우)", hint: "あお(아오/파랗다)", answer: "ぶどう(부도우)" },
+                { id: "pic4", value: "./images/strawberry.png", name: "いちご(이치고)", hint: "たねがない(타네가나이/씨앗이 없다)", answer: "いちご(이치고)" }
+
+            ],
+
+
+            [
+                { id: "pic0", value: "./images/red.png", name: "あか(아카)", hint: "りんご(링고/사과)", answer: "あか(아카)" },
+                { id: "pic1", value: "./images/blue.png", name: "あお(아오)", hint: "うみ(우미/바다)", answer: "あお(아오)" },
+                { id: "pic2", value: "./images/green.png", name: "みどり(미도리)", hint: "はっぱ(핫빠/잎)", answer: "みどり(미도리)" },
+                { id: "pic3", value: "./images/yellow.png", name: "きいろい(키이로이)", hint: "おうごん(오공/황금)", answer: "きいろい(키이로이)" },
+                { id: "pic4", value: "./images/white.png", name: "しろ(시로)", hint: "ゆき(유키/눈)", answer: "しろ(시로)" }
+
+
+            ],
+            [
+                { id: "pic0", value: "./images/1.png", name: "いち(이치)", hint: "ひとり(히토리/한명)", answer: "いち(이치)" },
+                { id: "pic1", value: "./images/2.png", name: "に(니)", hint: "ふたり(후타리/두명)", answer: "に(니)" },
+                { id: "pic2", value: "./images/3.png", name: "さん(산)", hint: "みっつ(밋츠/세개)", answer: "さん(산)" },
+                { id: "pic3", value: "./images/5.png", name: "ご(고)", hint: "ゆび(유비/손가락)", answer: "ご(고)" },
+                { id: "pic4", value: "./images/6.png", name: "ろく(로크)", hint: "なつ(나츠/여름)", answer: "ろく(로크)" }
+
+            ]
+        ];
+
+        function next() {
+            //어떤 데이터를 출력할지를 랜덤하게 결정하여 화면에 보여주자
+            currentArray = dataArray[categoryIndex];
+            r = getRandom(currentArray.length);
+            json = currentArray[r];
+            content.innerText = json.name;
+
+        }
+
+        function createData(n) {
+            categoryIndex = n;
+
+            next();
+
+            pageRefresh();
+
+            sec = 10;
+            timeout();
+
+            let pic = document.getElementsByName("pic"); //이름이 같은 이미지를 배열로 받아놓음
+            for (let i = 0; i < dataArray[categoryIndex].length; i++) {
+                pic[i].src = dataArray[categoryIndex][i].value;
+            }
+
+        }
+
+        function showHint() {
+            hint = document.getElementById("hint");
+            Swal.fire("힌트: " + dataArray[categoryIndex][r].hint);
+        }
+
+
+        function setScore() {
+            score.innerText = game_score + "점";
+
+        }
+        function createHp() {
+            for (let i = 0; i < 3; i++) {
+                let box = document.createElement("div");
+                box.style.width = size + "px";
+                box.style.height = size + "px";
+                box.style.background = "red";
+                box.style.border = "2px solid black";
+                box.style.position = "absolute";
+                box.style.left = 15 + i * size + "px";
+                box.style.top = 140 + "px";
+                hp.appendChild(box);
+                hpArray.push(box);
+            }
+        }
+        function init() {
+            wrapper = document.getElementById("wrapper");
+            header = document.getElementById("header");
+            hp = document.getElementById("hp");
+            score = document.getElementById("score");
+            content = document.getElementById("content");
+            img = document.querySelector("img");
+            footer = document.getElementById("footer");
+            hintbox = document.getElementById("hintbox");
+            hint = document.getElementById("hint");
+        }
+
+
+        function timeout() {
+            clearTimeout(st); //기존꺼 죽이기
+            time.innerText = sec + "초";
+            sec--;
+            if (sec < 0) {
+                sec = 0;
+            }
+
+            //재귀호출
+            st = setTimeout("timeout()", 1000);
+        }
+
+        function pageRefresh() {
+            timer = window.setTimeout("pageReload()", 10000);
+
+        }
+
+        function pageReload() {
+            Swal.fire({
+                title: '제한시간 10초가 경과하여 게임을 종료합니다',
+                icon: 'info',
+                confirmButtonText: 'OK'
+            }).then(function () {
+                window.location.reload();
+            });
+
+        }
+
+
+        addEventListener("load", function () {
+            init();
+            setScore();
+            createHp();
+
+            imgGroup = document.getElementsByName('pic');
+
+            for (let i = 0; i < dataArray[categoryIndex].length; i++) {
+                imgGroup[i].addEventListener("click", function () {
+                    //이미지를 클릭하면, 클릭된 이미지가 데이터 배열의 몇번째에 들어있는지 조사하자 
+
+                    //유저가 보고있는 현재 json
+                    let currentJson = dataArray[categoryIndex][r];
+
+                    //선택한 이미지에 해당하는 json 추출 
+                    let selectedJson = dataArray[categoryIndex][i];
+
+                    //서로 데이터 비교하기 
+                    if (currentJson.name == selectedJson.name) {
+                        game_score += 20;
+
+                        sec = 10;
+                        timeout();
+
+                        clearTimeout(timer);
+                        if (game_score < 100) {
+                            Swal.fire('せいかい!', '정답입니다!', 'success');
+                        } else {
+                            Swal.fire({
+                                title: 'おめでとう!!',
+                                text: '축하합니다!100점입니다! 게임을 계속 진행하시겠습니까?',
+                                icon: 'success',
+
+                                showCancelButton: true,
+                                confirmButtonText: '승인',
+                                cancelButtonText: '취소'
+                            }).then(result => {
+                                if (result.isConfirmed) {
+                                    game_score=0;
+                                    setScore();
+                                    next();
+                                } else if (result.isDismissed) {
+                                    window.location.reload();
+                                }
+                            });
+                        }
+           
+
+                        setScore();
+                        next();
+                        pageRefresh();
+
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'はずれ',
+                            text: '오답입니다!'
+                        });
+                        if (h > 0) {
+                            h--;
+                            if (h <= 0) {
+                                Swal.fire({
+                                    title:'しゅうりょう',
+                                    text: '게임이 끝났습니다. 초기화면으로 돌아갑니다.',
+                                    icon: 'info',
+                                    confirmButtonText: 'OK'
+                                }).then(function () {
+                                    window.location.reload();
+                                });
+
+                            }
+                        }
+                        hpArray[h].style.background = "skyblue";
+                    }
+
+                });
+
+            }
+
+        });
+
+
+    </script>
+</head>
+
+<body>
+
+    <p class="blink">원하시는 공부버튼을 클릭해주세요 ▼ </p>
+
+    <button id="bt1" onClick="createData(0)">과일 공부</button>
+    <button id="bt2" onClick="createData(1)">색깔 공부</button>
+    <button id="bt3" onClick="createData(2)">숫자 공부</button>
+    <div id="wrapper">
+        <div id="header">
+            <div id="hp"></div>
+            <span id="score">0점</span>
+            <span id="time">10초</span>
+        </div>
+        <div id="content"></div>
+        <div id="hintbox">
+            <button id="hint" onClick="showHint()">☆힌트☆</button>
+
+        </div>
+        <img name="pic">
+        <img name="pic">
+        <img name="pic">
+        <img name="pic">
+        <img name="pic">
+
+
+    </div>
+
+</body>
+
+</html>
